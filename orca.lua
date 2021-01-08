@@ -158,7 +158,7 @@ function orca:notes_off(ch)
     for k, v in pairs(self.active_notes[id]) do
       local note, length = self.active_notes[id][k][1], util.clamp(self.active_notes[id][k][2], 1, 16)
       if self.frame % length == 0 then
-        self.midi_out_device:note_off(note, nil, ch)
+        --self.midi_out_device:note_off(note, nil, ch) -- will this fix midi issues with note stealing?
         self.active_notes[id][k] = nil
       end
     end
@@ -333,6 +333,14 @@ function orca:erase(x, y)
   end
   self.cell[y][x] = "."
   self.info[at] = "empty"
+end
+
+function orca:erase_area(a, b)
+  for y = b, (b + selected_area_y) - 1 do
+    for x = a, (a + selected_area_x) - 1 do
+      self:erase(x, y)
+    end
+  end
 end
 
 function orca:index_at(x, y)
@@ -683,11 +691,13 @@ function keyboard.event(typ, code, val)
   elseif (code == hid.codes.KEY_TAB and val == 1) then
     if not alt then bar = not bar
     elseif alt then map = not map end
-  elseif (code == 14 or code == 111) then
-    orca:erase(x_index, y_index)
+  elseif code == 14 then
+    orca:erase_area(x_index, y_index)
+  elseif code == 111 then
+    orca:erase_area(x_index, y_index)
   elseif code == 58 or code == 56 then -- caps/alt
   elseif code == 110 then
-    orca:paste_area(x_index, y_index)
+  --  orca:paste_area(x_index, y_index)
   elseif code == 102 then
     x_index, y_index, field_offset_x, field_offset_y = 1, 1, 1, 1
     update_offset(x_index, y_index)
